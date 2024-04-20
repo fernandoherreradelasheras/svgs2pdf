@@ -1,6 +1,6 @@
 {
   "name": "svgs2pdf",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "description": "A command-line tool for rendering multiple SVG images to multiple or a single PDF file",
   "main": "bin/index.js",
   "bin": {
@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/fernandoherreradelasheras/svgs2pdf",
   "dependencies": {
-    "puppeteer": "^19.x",
+    "puppeteer": "^21.x",
     "yargs": "^17.x"
   },
   "devDependencies": {
