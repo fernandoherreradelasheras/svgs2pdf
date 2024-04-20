@@ -1,32 +1,26 @@
 {
-  "name": "svg2pdf-cli",
+  "name": "svgs2pdf",
   "version": "1.1.10",
-  "description": "A command-line tool for convert SVG image to PDF file",
+  "description": "A command-line tool for rendering multiple SVG images to multiple or a single PDF file",
   "main": "bin/index.js",
   "bin": {
-    "svg2pdf": "bin/index.js"
-  },
-  "scripts": {
-    "lint": "jshint bin/**.js test/**.js",
-    "pretest": "npm run lint",
-    "test": "nyc --reporter=lcov mocha --reporter spec --timeout 15000",
-    "coverage": "cat ./coverage/lcov.info | coveralls"
+    "svgs2pdf": "bin/index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/vowstar/svg2pdf-cli.git"
+    "url": "git://github.com/fernandoherreradelasheras/svgs2pdf.git"
   },
   "keywords": [
     "svg",
     "pdf",
-    "svg2pdf"
+    "svgs2pdf"
   ],
   "author": "Huang Rui",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/vowstar/svg2pdf-cli/issues"
+    "url": "https://github.com/fernandoherreradelasheras/svgs2pdf/issues"
   },
-  "homepage": "https://github.com/vowstar/svg2pdf-cli",
+  "homepage": "https://github.com/fernandoherreradelasheras/svgs2pdf",
   "dependencies": {
     "puppeteer": "^19.x",
     "yargs": "^17.x"

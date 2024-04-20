@@ -1,34 +1,24 @@
-# svg2pdf-cli
+# svgs2pdf
 
-[![Build Status](https://github.com/vowstar/svg2pdf-cli/actions/workflows/test.yml/badge.svg)](https://github.com/vowstar/vowstar/svg2pdf-cli/actions)
-[![Coverage Status](https://coveralls.io/repos/github/vowstar/svg2pdf-cli/badge.svg?branch=master)](https://coveralls.io/github/vowstar/svg2pdf-cli?branch=master)
-[![NPM Version](https://img.shields.io/npm/v/svg2pdf-cli.svg?style=flat)](https://www.npmjs.org/package/svg2pdf-cli)
-[![NPM Downloads](https://img.shields.io/npm/dm/svg2pdf-cli.svg?style=flat)](https://www.npmjs.org/package/svg2pdf-cli)
+forked from [svg2pdf-cli](https://github.com/vowstar/svg2pdf-cli/)
 
-A command-line tool for convert SVG image to PDF file
+A command-line tool for rendering multiple SVG images to multiple or a single PDF file
 
 ## Installation
 
-svg2pdf-cli can be installed from NPM using:
+svgs2pdf can be installed from NPM using:
 
 ```bash
-npm install -g svg2pdf-cli
-```
-
-NOTE: libgbm required
-
-```bash
-sudo apt-get update
-sudo apt-get install -y libgbm-dev
+npm install -g svgs2pdf
 ```
 
 ## Features
 
-* Support HTML, SVG file input
-* Support set SVG size (width and height), NOTE: This option only can change the svg image size on the PDF page, but can't set PDF page size.
-* Support PDF file output
+* Support single or multiple SVG file input
+* Support setting SVG size (width and height), NOTE: This option only can change the svg image size on the PDF page, but can't set PDF page size.
+* Support single or multiple PDF file output. When multiple SVG files are provieded single pdf output requires `pdftk` binary installed
 
-Because svg2pdf using Chromium to render the svg, and it only support these format:
+Because svgs2pdf uses Chromium to render the svg, it only supports these formats:
 
 Format  |       size
 ------- | ----------------
@@ -47,9 +37,21 @@ A6      | 4.13in x 5.83in
 ## Useage
 
 ```bash
-Usage: svg2pdf <source> <destination>
-e.g.: svg2pdf source.svg destination.pdf
-e.g.: svg2pdf -w 100% source.svg destination.pdf
-e.g.: svg2pdf -w 100px -h 100px source.svg destination.pdf
-e.g.: svg2pdf -w 100px -h 100px -f A4 source.svg destination.pdf
+Usage: svgs2pdf [options] <svg1> ...
+Options:
+      --help        Show help                                          [boolean]
+      --version     Show version number                                [boolean]
+  -w, --width       Set width of PDF, allowed units: %, px
+  -h, --height      Set height of PDF, allowed units: %, px
+  -f, --format      Set format of PDF, allowed options: Letter, Legal, Tabloid,
+                    Ledger, A0, A1, A2, A3, A4, A5, A6
+  -o, --output-dir  Set the output directory for pdf file(s)
+  -m, --merge-file  Set the filename for a single pdf cointaining each svg as a
+                    page (requires pdftk)
+
+e.g.: svgs2pdf source1.svg
+e.g.: svgs2pdf source1.svg source2.svg source3.svg
+e.g.: svgs2pdf -w 100px -h 100px source.svg
+e.g.: svgs2pdf -w 100px -h 100px -f A4 --output-dir /tmp source1.svg
+e.g.: svgs2pdf -m combined-pdf.pdf source1.svg  source2.svg
 ```

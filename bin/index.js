@@ -1,81 +1,105 @@
 #!/usr/bin/env node
 
+const shell = (cmd) => execSync(cmd, { encoding: 'utf8' });
+
+function executableIsAvailable(name){
+    try {
+        shell(`which ${name}`);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
 const puppeteer = require('puppeteer');
+const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const argv = require('yargs')
   .usage(
-    'Usage: svg2pdf <source> <destination>\n' +
-    'e.g.: svg2pdf source.svg destination.pdf\n' +
-    'e.g.: svg2pdf -w 100% source.svg destination.pdf\n' +
-    'e.g.: svg2pdf -w 100px -h 100px source.svg destination.pdf\n' +
-    'e.g.: svg2pdf -w 100px -h 100px -f A4 source.svg destination.pdf')
-  .demand(2)
+    'Usage: svg2pdf [options] <source svg> ...\n')
   .alias('w', 'width')
   .describe('w', 'Set width of PDF, allowed units: %, px')
   .alias('h', 'height')
   .describe('h', 'Set height of PDF, allowed units: %, px')
   .alias('f', 'format')
   .describe('f', 'Set format of PDF, allowed options: Letter, Legal, Tabloid, Ledger, A0, A1, A2, A3, A4, A5, A6')
-  .argv;
+  .alias('o', 'output-dir')
+  .describe('o', 'Set the output directory for pdf file(s)')
+  .alias('m', 'merge-file')
+  .describe('m', 'Set the filename for a single pdf cointaining each svg as a page (requires pdftk)')
+  .demandCommand(1)
+  .parse();
 
-if (argv._.length >= 2) {
-  svgFile = argv._[0];
-  pdfFile = argv._[1];
-  htmlFile = path.resolve(path.join(path.dirname(svgFile), '.' + path.basename(svgFile) + '.html'));
-  try {
-    var content;
-    var widthStr;
-    var heightStr;
+var outDir;
+var widthStr;
+var heightStr;
+var mergePdf;
 
-    if (argv.w) {
-      widthStr = 'width="' + argv.w + '"';
-    } else {
-      widthStr = 'width=100%"';
+if (argv.o) {
+    outDir = argv.o;
+} else {
+    outDir = '.';
+}
+if (argv.w) {
+    widthStr = 'width="' + argv.w + '"';
+} else {
+    widthStr = 'width=100%"';
+}
+if (argv.h) {
+    heightStr = 'height="' + argv.h + '"';
+} else {
+    heightStr = '';
+}
+if (argv.f) {
+    formatStr = argv.f;
+} else {
+    formatStr = 'A4';
+}
+if (argv._.length > 1 && argv.m) {
+    if (!executableIsAvailable('pdftk')) {
+        console.error('Merging multiple svg files into a single pdf requires pdftk installed');
+        process.exit(-1);
     }
-    if (argv.h) {
-      heightStr = 'height="' + argv.h + '"';
-    } else {
-      heightStr = '';
-    }
-    if (argv.f) {
-      formatStr = argv.f;
-    } else {
-      formatStr = 'A4';
-    }
-
-    var svgCode = fs.readFileSync(svgFile, 'utf8');
-    var svgBase64 = new Buffer.from(svgCode).toString('base64');
-
-    content = '<img ' + widthStr + ' ' + heightStr + ' src="data:image/svg+xml;base64,' + svgBase64 + '" />';
-    svg2pdf(content, pdfFile);
-  } catch (e) {
-    console.log(e);
-  }
+    mergePdf = argv.m;
 }
 
-function svg2pdf(source, destination, format='A4') {
-  var html = source;
-
-  (async () => {
+(async () => {
     const browser = await puppeteer.launch({
       args: ['--disable-dev-shm-usage', '--no-sandbox', '--allow-file-access-from-files', '--enable-local-file-accesses']
     });
     const page = await browser.newPage();
+    const outputPdfs = [];
 
-    try {
-      if (fs.existsSync(source)) {
-        const htmlFile = path.resolve(source);
-        await page.goto("file://" + htmlFile, { waitUntil: 'networkidle2'});
-      } else {
-        await page.setContent(html, {waitUntil: 'networkidle0'});
-      }
-    } catch(err) {
-      console.error(err);
+    for (var svgFile of argv._) {
+        const pdfFile = path.resolve(path.join(outDir, path.basename(svgFile, '.svg') + '.pdf'));
+        try {
+            var svgCode = fs.readFileSync(svgFile, 'utf8');
+            var svgBase64 = new Buffer.from(svgCode).toString('base64');
+
+            const content = '<img ' + widthStr + ' ' + heightStr + ' src="data:image/svg+xml;base64,' + svgBase64 + '" />';
+            await page.setContent(content, {waitUntil: 'domcontentloaded'});
+            await page.pdf({path: pdfFile, format: formatStr});
+        } catch (e) {
+            console.error(e);
+        }
+        outputPdfs.push(pdfFile);
     }
 
-    await page.pdf({path: destination, format: format});
-
     await browser.close();
-  })();
-}
+
+    if (mergePdf) {
+        const mergedFile = path.resolve(path.join(outDir, mergePdf));
+        const options = outputPdfs.concat(['cat', 'output', mergedFile]);
+        const child = spawnSync('pdftk', options);
+        for (var pdfFile of outputPdfs) {
+            fs.unlinkSync(pdfFile);
+        }
+        console.log(`${mergedFile} generated.`);
+    } else {
+        for (var pdfFile of outputPdfs) {
+            console.log(`${pdfFile} generated.`);
+        }
+    }
+
+})();
